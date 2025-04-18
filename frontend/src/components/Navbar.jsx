@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Wallet, Menu, X, LogIn, LogOut, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -114,15 +115,14 @@ const Navbar = () => {
                 </motion.button>
               </div>
             ) : (
-              <motion.a
-                href="/login"
+              <Link
+                to={'/login'}
                 className="flex items-center space-x-1 text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md font-medium text-sm"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                
               >
                 <LogIn size={16} />
                 <span>Login</span>
-              </motion.a>
+              </Link>
             )}
           </div>
           
@@ -180,16 +180,14 @@ const Navbar = () => {
               </motion.button>
             </>
           ) : (
-            <motion.a
-              href="/login"
-              className="block w-full flex items-center justify-center space-x-1 text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md font-medium text-base"
-              whileHover={{ x: 5 }}
-              whileTap={{ scale: 0.95 }}
+            <Link
+              to={'/login'}
+              className=" w-full flex items-center justify-center space-x-1 text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md font-medium text-base"
               onClick={toggleMenu}
             >
               <LogIn size={16} />
               <span>Login</span>
-            </motion.a>
+            </Link>
           )}
         </div>
       </motion.div>
