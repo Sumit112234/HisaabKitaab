@@ -3,10 +3,10 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { Wallet, Menu, X, LogIn, LogOut, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const Navbar = () => {
+const Navbar = ({userLogin,setUserLogin}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // const [isLoggedIn, setUserLogin] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   
   const { scrollY } = useScroll();
@@ -28,10 +28,10 @@ const Navbar = () => {
   useEffect(() => {
     const user = localStorage.getItem('hisaabUser');
     if (user) {
-      setIsLoggedIn(true);
+      setUserLogin(true);
       setCurrentUser(JSON.parse(user));
     } else {
-      setIsLoggedIn(false);
+      setUserLogin(false);
       setCurrentUser(null);
     }
   }, []);
@@ -42,7 +42,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('hisaabUser');
-    setIsLoggedIn(false);
+    setUserLogin(false);
     setCurrentUser(null);
     // Redirect to home or login page if needed
     // window.location.href = '/';
@@ -98,7 +98,7 @@ const Navbar = () => {
             ))}
             
             {/* Auth Button */}
-            {isLoggedIn ? (
+            {userLogin ? (
               <div className="flex items-center space-x-3">
                 <motion.div className="text-sm text-gray-600 flex items-center">
                   <User size={16} className="mr-1" />
@@ -163,7 +163,7 @@ const Navbar = () => {
           ))}
           
           {/* Auth Button for mobile */}
-          {isLoggedIn ? (
+          {userLogin ? (
             <>
               <div className="px-3 py-2 text-sm text-gray-600 flex items-center">
                 <User size={16} className="mr-1" />

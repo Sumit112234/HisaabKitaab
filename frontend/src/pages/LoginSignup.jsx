@@ -5,7 +5,7 @@ import axios from 'axios';
 import {useNavigate} from 'react-router-dom'
 
 
-export default function AuthPage() {
+export default function AuthPage({userLogin , setUserLogin}) {
 
     const backendUrl = import.meta.env.VITE_APP_BACKEND_URL;
   const [isLogin, setIsLogin] = useState(true);
@@ -25,6 +25,7 @@ export default function AuthPage() {
     const user = localStorage.getItem('hisaabUser');
     if (user) {
       setIsLoggedIn(true);
+      setUserLogin(true);
       navigate('/')
       setCurrentUser(JSON.parse(user));
     }
@@ -41,14 +42,15 @@ export default function AuthPage() {
     try {
         const newUser = {
             name: formData.username,
-            email: formData.email,
+            email: formData.email.toLocaleLowerCase(),
             password: formData.password,
             groups: [],
           };
+          console.log(newUser)
     
-          let res = await axios.post(backendUrl + '/auth/register', data);
+          let res = await axios.post(backendUrl + '/auth/register', newUser);
           console.log(res);
-          return {status : true};    
+          return {status : true, id : res.data._id};    
     } catch (error) {
       console.log("some error occured")  ;
       return {status : false};
@@ -65,7 +67,7 @@ export default function AuthPage() {
     
           let res = await axios.post(backendUrl + '/auth/login', data);
           console.log(res);
-          return {status : true};    
+          return {status : true , id : res.data._id};    
     } catch (error) {
       console.log("some error occured")  ;
       return {status : false};
@@ -80,11 +82,11 @@ export default function AuthPage() {
 
     if (isLogin) {
       // Login logic
-      let { status } = await loginUser(formData);
+      let { status , id} = await loginUser(formData);
       if(status)
       {
         const newUser = {
-          id: Date.now(),
+          id,
           username: formData.username,
           email: formData.email,
           password: formData.password,
@@ -93,6 +95,7 @@ export default function AuthPage() {
         localStorage.setItem('hisaabUser', JSON.stringify(newUser));
         
         setIsLoggedIn(true);
+        setUserLogin(true);
         navigate('/');
         setCurrentUser(newUser);
         
@@ -117,14 +120,14 @@ export default function AuthPage() {
       }
 
     console.log( formData)
-    let { status } = await createUser(formData);
+    let { status , id} = await createUser(formData);
     console.log(status, formData)
     
     if(status)
     {
         
       const newUser = {
-        id: Date.now(),
+        id,
         username: formData.username,
         email: formData.email,
         password: formData.password,
@@ -133,6 +136,7 @@ export default function AuthPage() {
       localStorage.setItem('hisaabUser', JSON.stringify(newUser));
       
       setIsLoggedIn(true);
+      setUserLogin(true);
       navigate('/');
       setCurrentUser(newUser);
 
@@ -148,6 +152,7 @@ export default function AuthPage() {
   const handleLogout = () => {
     localStorage.removeItem('hisaabUser');
     setIsLoggedIn(false);
+    setUserLogin(true);
     setCurrentUser(null);
   };
 

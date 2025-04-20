@@ -4,8 +4,9 @@ import { Wallet, Users, Calculator, Phone, Menu, X, ChevronRight, Share2 } from 
 import { Link } from 'react-router-dom';
 import Footer from './Footer';
 
-const HomePage = () => {
+const HomePage = ({userLogin}) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const user = localStorage.getItem('hisaabUser') || null;
 
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -101,7 +102,7 @@ const HomePage = () => {
           </motion.p>
           <motion.div variants={fadeIn}>
             <Link 
-              to={'/expense-list'}
+              to={userLogin ? '/expense-list' : '/login'}
               className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-md transition duration-300"
             >
               Manage Expenses <ChevronRight className="ml-2 h-5 w-5" />
