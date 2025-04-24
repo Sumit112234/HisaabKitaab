@@ -15,21 +15,22 @@ export const getGroupSettlements = async (req, res, next) => {
     }
   
     // Check if user is member of the group
-    const isMember = group.members.some(
-      member => member.user.toString() === req.user.id
-    );
+    // const isMember = group.members.some(
+    //   member => member.user.toString() === req.user.id
+    // );
   
-    if (!isMember) {
-      return next(
-        new ErrorResponse('Not authorized to view settlements for this group', 401)
-      );
-    }
+    // if (!isMember) {
+    //   return next(
+    //     new ErrorResponse('Not authorized to view settlements for this group', 401)
+    //   );
+    // }
   
     // Get all approved expenses for the group
     const expenses = await Expense.find({
       group: req.params.groupId,
       status: 'approved'
-    }).populate([
+    })
+    .populate([
       { path: 'paidBy', select: 'name email' },
       { path: 'shares.user', select: 'name email' }
     ]);

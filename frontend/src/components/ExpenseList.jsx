@@ -109,6 +109,7 @@ export default function ExpenseManager() {
       setSearchResults([]);
     }
   };
+
   useEffect(() => {
     console.log("Members state updated:", members);
   }, [members]);
@@ -142,7 +143,8 @@ export default function ExpenseManager() {
       await fetchGroupExpenses(groupId);
       
       // Get settlements for the group
-      // await fetchSettlements(groupId);
+      console.log("Fetching settlements ...")
+      await fetchSettlements(groupId);
       
       setLoading(false);
     } catch (err) {
@@ -175,7 +177,8 @@ export default function ExpenseManager() {
   // Fetch settlements for a group
   const fetchSettlements = async (groupId) => {
     try {
-      const { data } = await api.get(backend_url + `/groups/${groupId}/settlements?id=${localUser.id}`);
+      // const { data } = await api.get(backend_url + `/groups/${groupId}/settlements?id=${localUser.id}`);
+      const { data } = await api.get(backend_url + `/settlement/get-settlements/${groupId}`);
       console.log(data)
       setSettlements(data.data.settlements);
       setBalances(data.data.balances);
@@ -235,6 +238,7 @@ const addMember = async (user) => {
   // };
 
   // Remove member from group
+ 
   const removeMember = async (userId) => {
     console.log("query for removeMember : ", currentGroupId)
     if (currentGroupId) {
@@ -361,7 +365,7 @@ const createGroup = async () => {
       
       // Refresh settlements if an expense is verified
       if (!isCurrentlyVerified) {
-        // await fetchSettlements(currentGroupId);
+        await fetchSettlements(currentGroupId);
       }
     } catch (err) {
       console.error('Error verifying expense:', err);
@@ -372,7 +376,7 @@ const createGroup = async () => {
   // Settle an expense
   const settleExpense = async (expenseId) => {
     try {
-      await api.put(`/expenses/${expenseId}/settle`);
+      await api.put(backend_url + `/expenses/${expenseId}/settle`);
       
       // Refresh settlements after settling
       await fetchSettlements(currentGroupId);
@@ -619,12 +623,13 @@ const createGroup = async () => {
                   <div className="space-y-2">
                     {members.map(member => {
                       const memberBalance = balances[member._id]?.net || 0;
+                      // console.log(member)
                       return (
                         <div 
                           key={member._id}
                           className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
                         >
-                          <span className="font-medium">{member.name}</span>
+                          <span className="font-medium">{member.user.name}</span>
                           <span className={`font-medium ${
                             memberBalance > 0 
                               ? 'text-green-600' 

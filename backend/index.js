@@ -8,6 +8,7 @@ import groupRoutes from "./routes/groupRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 // import userRoutes from './routes/userRoutes.js;'
 import userRoutes from './routes/userRoutes.js'
+import settlementRoutes from './routes/settlementRoutes.js'
 
 // import expenseRoutes from "./routes/expenseRoute.js"
 
@@ -23,6 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/settlement", settlementRoutes);
 
 
 app.use("/",(req,res)=>{
