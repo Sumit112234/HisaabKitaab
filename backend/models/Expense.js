@@ -40,12 +40,31 @@ const expenseSchema = new mongoose.Schema({
     default: 'pending'
   },
   requiredApprovals: {
-    type: Number,
+    type: Number
   },
   date: {
     type: Date,
     default: Date.now
   }
+}, {
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+expenseSchema.virtual('splitDetails').get(function () {
+  const approvedCount = this.approvals.length;
+  if (approvedCount === 0) return [];
+
+  const amountPerPerson = this.amount / approvedCount;
+
+  return this.approvals.map(userId => ({
+    user: userId,
+    amountToPay: amountPerPerson
+  }));
+});
+
+expenseSchema.methods.isVerified = function () {
+  return this.approvals.length >= this.requiredApprovals;
+};
 
 export default mongoose.model('Expense', expenseSchema);

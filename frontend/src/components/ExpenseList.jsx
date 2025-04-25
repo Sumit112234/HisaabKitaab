@@ -258,7 +258,11 @@ const addMember = async (user) => {
   // Create group
   // Create group
 const createGroup = async () => {
-  if (groupName.trim() && members.length > 0) {
+
+  // console.log(members, currentUser)
+  // return ;
+   
+    if (groupName.trim() && members.length > 0) {
     try {
       // Ensure current user is included as a member
       let allMembers = [...members];
@@ -281,6 +285,8 @@ const createGroup = async () => {
       // Refresh user's groups
       const groupsResponse = await api.post(backend_url + '/user/me/groups', {id: localUser.id});
       setUserGroups(groupsResponse.data.data);
+      await selectGroup(data.data._id);
+      
     } catch (err) {
       console.error('Error creating group:', err);
       setError('Failed to create group');
@@ -404,7 +410,8 @@ const createGroup = async () => {
 
   // Get member name by ID
   const getMemberName = (id) => {
-    const member = members.find(m => m._id === id);
+    // console.log("members : ", members, id)
+    const member = members.find(m => m.user._id === id);
     return member ? member.name : 'Unknown';
   };
 
@@ -622,13 +629,15 @@ const createGroup = async () => {
                   <h4 className="font-medium text-gray-700 mb-3">Member Balances</h4>
                   <div className="space-y-2">
                     {members.map(member => {
-                      const memberBalance = balances[member._id]?.net || 0;
+                      // const memberBalance = balances[member.user._id]?.net || 0;
+                      const memberBalance = balances.find((m) => m.userId === member.user._id)?.amount || 0;
                       // console.log(member)
                       return (
                         <div 
                           key={member._id}
                           className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
                         >
+
                           <span className="font-medium">{member.user.name}</span>
                           <span className={`font-medium ${
                             memberBalance > 0 
@@ -656,8 +665,9 @@ const createGroup = async () => {
                   ) : (
                     <div className="space-y-2">
                       {settlements.map((settlement, index) => {
-                        const fromUser = members.find(m => m._id === settlement.from);
-                        const toUser = members.find(m => m._id === settlement.to);
+                        const fromUser = members.find(m => m.user._id === settlement.from._id);
+                        const toUser = members.find(m => m.user._id === settlement.to._id);
+                        console.log("settlement : ", settlement, fromUser, toUser)
                         
                         return (
                           <div 
@@ -666,13 +676,13 @@ const createGroup = async () => {
                           >
                             <div className="flex items-center">
                               <span className="font-medium text-red-600">
-                                {fromUser?.name || 'Unknown'}
-                                {fromUser?._id === currentUser?._id ? ' (You)' : ''}
+                                {fromUser?.user?.name || 'Unknown'}
+                                {fromUser?.user?._id === currentUser?._id ? ' (You)' : ''}
                               </span>
                               <ArrowRight size={16} className="mx-2 text-gray-500" />
                               <span className="font-medium text-green-600">
-                                {toUser?.name || 'Unknown'}
-                                {toUser?._id === currentUser?._id ? ' (You)' : ''}
+                                {toUser?.user?.name || 'Unknown'}
+                                {toUser?.user?._id === currentUser?._id ? ' (You)' : ''}
                               </span>
                             </div>
                             <span className="font-medium">₹{parseFloat(settlement.amount).toFixed(2)}</span>
@@ -817,14 +827,17 @@ const createGroup = async () => {
               ) : (
                 <div className="space-y-4">
                   {verifiedExpenses.map(expense => {
-                    const payer = members.find(m => m._id === expense.paidBy);
+                    console.log(balances)
+                    const payer = members.find(m => m.user._id === expense.paidBy._id);
                     const splitAmount = expense.splitBetween?.length > 0
                       ? (expense.amount / expense.splitBetween.length).toFixed(2)
                       : (expense.amount / members.length).toFixed(2);
                     
-                    const isSettled = expense.settledBy?.includes(currentUser?._id);
+                    const isSettled = expense.splitBetween?.includes(currentUser?._id);
                     const isOwedByCurrentUser = expense.splitBetween?.includes(currentUser?._id) && 
-                                               expense.paidBy !== currentUser?._id;
+                                               expense.paidBy._id !== currentUser?._id;
+
+                    let isVerified = hasUserVerified(expense);
                     
                     return (
                       <div
@@ -835,13 +848,28 @@ const createGroup = async () => {
                           <div>
                             <div className="flex items-center">
                               <h4 className="font-medium text-gray-800">{expense.title}</h4>
-                              <span className="ml-2 flex items-center text-green-700 text-xs bg-green-100 px-2 py-1 rounded-full">
-                                <CheckCircle size={12} className="mr-1" />
-                                Verified
-                              </span>
+                              {!isVerified ? (
+                                                          <button
+                                                          onClick={() =>{ toggleVerification(expense._id, isVerified); isVerified = true}}
+                                                          className={`px-3 mx-3 py-1 rounded-md text-sm ${
+                                                            isVerified
+                                                              ? 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                                                              : 'bg-green-600 hover:bg-green-700 text-white'
+                                                          }`}
+                                                        >
+                                                          {isVerified ? 'Revoke Approval' : 'Approve'}
+                                                        </button>
+
+                              ) : 
+                              (<span className="ml-2 flex items-center text-green-700 text-xs bg-green-100 px-2 py-1 rounded-full">
+                              <CheckCircle size={12} className="mr-1" />
+                              Verified
+                            </span>)}
+                              
                             </div>
+                            {/* {console.log(payer)} */}
                             <p className="text-sm text-gray-600">
-                              {formatDate(expense.createdAt)} • Paid by {payer?.name} {payer?._id === currentUser?._id ? '(You)' : ''}
+                              {formatDate(expense.date)} • Paid by {payer?.user?.name} {payer?.user?._id === currentUser?._id ? '(You)' : ''}
                             </p>
                           </div>
                           <div className="text-right">
@@ -853,8 +881,9 @@ const createGroup = async () => {
                         {expense.description && (
                           <p className="text-gray-700 text-sm mt-2 mb-3">{expense.description}</p>
                         )}
+                        {/* {console.log(expense.splitBetween , members)} */}
                         
-                        {expense.splitBetween && expense.splitBetween.length < members.length && (
+                        {expense.splitBetween && expense.splitBetween.length <= members.length && (
                           <div className="mt-3 text-sm text-gray-600">
                             <p>Split between: {expense.splitBetween.map(id => getMemberName(id)).join(', ')}</p>
                           </div>
@@ -931,9 +960,9 @@ const createGroup = async () => {
                   >
                     <option value="">Select who paid</option>
                     {/* {console.log(members)} */}
-                    {members.map(member => (
-                      <option key={member._id} value={member.user._id}>
-                        {member.user.name} {member.user._id === currentUser?._id ? '(You)' : ''}
+                    {members.length > 0 && members.map(member => (
+                      <option key={member._id} value={member?.user?._id}>
+                        {member?.user.name} {member?.user._id === currentUser?._id ? '(You)' : ''}
                       </option>
                     ))}
                   </select>
@@ -947,17 +976,17 @@ const createGroup = async () => {
                       `Split between ${newExpense.splitBetween.length} selected members`}
                   </div>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {members.map(member => (
+                    {members.length > 0 &&  members.map(member => (
                       <div
                         key={member._id}
-                        onClick={() => toggleMemberForSplit(member.user._id)}
+                        onClick={() => toggleMemberForSplit(member?.user._id)}
                         className={`px-3 py-1 rounded-full text-sm cursor-pointer transition ${
-                          newExpense.splitBetween.includes(member.user._id) || newExpense.splitBetween.length === 0
+                          newExpense.splitBetween.includes(member?.user._id) || newExpense.splitBetween.length === 0
                             ? 'bg-indigo-100 text-indigo-800 border border-indigo-300'
                             : 'bg-gray-100 text-gray-600 border border-gray-200'
                         }`}
                       >
-                        {member.user.name}
+                        {member?.user.name}
                       </div>
                     ))}
                   </div>
