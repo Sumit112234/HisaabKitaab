@@ -14,7 +14,6 @@ export const getGroupSettlements = async (req, res, next) => {
   }
 
   // Fetch verified expenses with populated users
-
   const expenses = await Expense.find({
     group: req.params.groupId,
     status: 'verified'
@@ -30,16 +29,28 @@ export const getGroupSettlements = async (req, res, next) => {
     balances[member.user.toString()] = 0;
   });
 
+  const totalMembers = group.members.length;
+  console.log("Total expenses: ", expenses , totalMembers)
   // Calculate individual balances
   expenses.forEach(expense => {
     const approvedUserIds = expense.approvals.map(user => user._id.toString());
-    const shareAmount = expense.amount / approvedUserIds.length;
+
+    let splitAmongUserIds = [];
+    if (approvedUserIds.length >= totalMembers / 2) {
+      // More than half approved ➔ split among all group members
+      splitAmongUserIds = group.members.map(member => member.user.toString());
+    } else {
+      // Half or fewer approved ➔ split among only approvers
+      splitAmongUserIds = approvedUserIds;
+    }
+
+    const shareAmount = expense.amount / splitAmongUserIds.length;
 
     // Add full amount to the payer
     balances[expense.paidBy._id.toString()] += expense.amount;
 
-    // Subtract equal share from each approved user
-    approvedUserIds.forEach(uid => {
+    // Subtract equal share from each split member
+    splitAmongUserIds.forEach(uid => {
       balances[uid] -= shareAmount;
     });
   });
@@ -50,7 +61,7 @@ export const getGroupSettlements = async (req, res, next) => {
     amount: parseFloat(amount.toFixed(2))
   }));
 
-  // 🆕 Save the original balances before modifying them for settlement
+  // Save the original balances before modifying them for settlement
   const originalBalances = JSON.parse(JSON.stringify(balanceArray));
 
   // Sort balances: most positive (creditor) to most negative (debtor)
