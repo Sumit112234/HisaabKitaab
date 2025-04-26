@@ -6,7 +6,9 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import AuthPage from './pages/LoginSignup'
 import { use, useState } from 'react'
-import SuggestionPage from './components/suggestedPlace'
+import SuggestionPage from './components/Suggestions'
+// import SuggestionPage from './components/SuggestedPlace'
+// import SuggestionPage from './components/suggestedPlace'
 
 function App() {
 
@@ -21,6 +23,9 @@ function App() {
         <Route element={<AuthPage userLogin={userLogin} setUserLogin={setUserLogin} />}  path='/login' />
         <Route element={<ManageExpenses/>} path='/expense-list' />
         <Route element={<SuggestionPage/>} path='/suggested-place' />
+        {/* <Route element={<SuggestionPage/>} path='/suggested-place' /> */}
+
+
       </Routes>
       
     </BrowserRouter>
