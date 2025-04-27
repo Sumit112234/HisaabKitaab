@@ -276,3 +276,33 @@ export const addMembers = async (req, res, next) => {
   });
 };
 
+export const deleteGroup = async (req, res, next) => {
+  try {
+    const group = await Group.findById(req.params.id);
+
+    if (!group) {
+      return res.status(404).json({ success: false, message: 'Group not found' });
+    }
+
+    // Optional: Check if the user is the creator (You can uncomment if needed)
+    // if (group.creator.toString() !== req.user.id) {
+    //   return res.status(401).json({ success: false, message: 'Not authorized to delete this group' });
+    // }
+
+    // Remove this group reference from all its members
+    const memberIds = group.members.map(member => member.user);
+
+    await User.updateMany(
+      { _id: { $in: memberIds } },
+      { $pull: { groups: group._id } }
+    );
+
+    // Finally, delete the group
+    await group.deleteOne();
+
+    res.status(200).json({ success: true, message: 'Group deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};

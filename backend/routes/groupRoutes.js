@@ -1,6 +1,6 @@
 import express from "express";
 import { getUser, getUserGroups, getUsers } from "../controllers/userController.js";
-import { acceptInvitation, addMembers, createGroup, getGroup, getGroups, leaveGroup } from "../controllers/groupController.js";
+import { acceptInvitation, addMembers, createGroup, deleteGroup, getGroup, getGroups, leaveGroup } from "../controllers/groupController.js";
 // import { createGroup, getUserGroups } from "../controllers/groupController.js";
 // import getUser
 // import protect from "../middleware/authMiddleware.js";
@@ -22,6 +22,7 @@ router
 
 router.route('/:id/members').put(addMembers);
 router.route('/:id/members/:userId').delete(leaveGroup);
+router.route('/:id').delete(deleteGroup);
 // router.route('/:groupId/settlements').get(acceptInvitation);
 router.route('/:groupId/settlements').get(acceptInvitation);
 

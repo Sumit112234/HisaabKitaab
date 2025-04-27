@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Search, Plus, Check, X, DollarSign, Users, AlertCircle, CheckCircle, Clock, UserPlus, ArrowRight } from 'lucide-react';
+import { Search, Plus, Check, X, DollarSign, Users, AlertCircle, CheckCircle, Clock, UserPlus, ArrowRight, Cross, CrossIcon } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -57,6 +57,9 @@ export default function ExpenseManager() {
   const [searchResults, setSearchResults] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const localUser = JSON.parse(localStorage.getItem('hisaabUser'));
+  const [showModal, setShowModal] = useState(false);
+  const [groupToDelete, setGroupToDelete] = useState(null);
+
   // Check if user is authenticated and get user data
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -458,6 +461,51 @@ const createGroup = async () => {
       </div>
     );
   }
+  
+ 
+  const handleDeleteClick = (e, groupId) => {
+    e.stopPropagation(); // Prevent the group click event from firing
+    setGroupToDelete(groupId);
+    setShowModal(true);
+  };
+
+  const confirmDelete = () => {
+    if (groupToDelete) {
+      deleteGroup(groupToDelete);
+      setShowModal(false);
+      setGroupToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowModal(false);
+    setGroupToDelete(null);
+  };
+
+  const deleteGroup = async (groupId) => {
+
+ 
+    // console.log(updatedGroup,userGroups, localUser, groupId)
+    // return ; 
+
+
+    try {
+      await api.delete(backend_url + `/groups/${groupId}`);
+      setUserGroups(userGroups.filter(group => group._id !== groupId));
+      if (currentGroupId === groupId) {
+        setGroupCreated(false);
+        setCurrentGroupId(null);
+        setMembers([]);
+        setPendingExpenses([]);
+        setVerifiedExpenses([]);
+        let updatedGroup = userGroups.filter(group => group._id !== groupId);
+        setUserGroups(updatedGroup)
+      }
+    } catch (err) {
+      console.error('Error deleting group:', err);
+      setError('Failed to delete group');
+    }
+  }
 
   
 
@@ -472,25 +520,62 @@ const createGroup = async () => {
       <div>
         {/* Show user's existing groups if any */}
         {userGroups.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-green-300 mb-4">Your Groups</h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              {userGroups.map(group => (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-green-300 mb-4">Your Groups</h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            {userGroups.map(group => (
+              <div 
+                key={group._id}
+                className="border border-green-800 rounded-lg p-4 hover:bg-green-900 hover:border-green-500 cursor-pointer transition relative"
+              >
+                {/* Cross Icon */}
                 <div 
-                  key={group._id}
-                  onClick={() => selectGroup(group._id)}
-                  className="border border-green-800 rounded-lg p-4 hover:bg-green-900 hover:border-green-500 cursor-pointer transition"
+                  className="absolute top-2 right-2 text-red-500 hover:text-red-300 w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-900"
+                  onClick={(e) => handleDeleteClick(e, group._id)}
                 >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </div>
+                
+                {/* Group content - clicking this area will select the group */}
+                <div onClick={() => selectGroup(group._id)}>
                   <h3 className="font-medium text-green-400">{group.name}</h3>
                   <div className="flex items-center text-gray-400 mt-2">
                     <Users size={16} className="mr-1" />
                     <span>{group.members?.length || 0} members</span>
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 border border-green-800 rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-medium text-green-300 mb-4">Confirm Deletion</h3>
+            <p className="text-gray-300 mb-6">Do you really want to delete this group?</p>
+            <div className="flex justify-end space-x-3">
+              <button 
+                onClick={cancelDelete}
+                className="px-4 py-2 rounded-md border border-gray-600 text-gray-300 hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
+              >
+                Delete
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
       
         <div className="bg-gray-900 p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold text-green-300 mb-6">Create a New Group</h2>
